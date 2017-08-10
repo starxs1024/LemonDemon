@@ -240,7 +240,7 @@ public class LMediaController extends FrameLayout implements IMediaController {
                 if (onVideoPlayBtnClickListener != null) {
                     onVideoPlayBtnClickListener.setOnVideoPlayBtnClick(false);
                 }
-                // TODO: 2017/1/17 手动暂停
+                // 手动暂停
                 if (onShowHidListenner != null) {
                     onShowHidListenner.onThumbPause();
                 }
@@ -652,9 +652,15 @@ public class LMediaController extends FrameLayout implements IMediaController {
         }
         mController.seekTo(position);
         float percent = (float) ((double) position / (double) mDuration);
-        DecimalFormat fnum = new DecimalFormat("##0.0");
+        // 显示为科学计数法，并取1位小数
+        DecimalFormat fnum = new DecimalFormat("##0.#E0");
         float c_percent = 0.0f;
-        c_percent = Float.parseFloat(fnum.format(percent).trim());
+        try {
+            c_percent = Float.parseFloat(fnum.format(percent));
+            Log.d("c_percent", c_percent + "");
+        } catch (Exception e) {
+
+        }
         skVideoSeek.setProgress((int) (c_percent * 100));
     }
 

@@ -1,9 +1,11 @@
 package com.nova.LemonDemo;
 
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -15,26 +17,42 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.linksu.video_manager_library.listener.OnVideoPlayerListener;
 import com.linksu.video_manager_library.ui.LVideoView;
 import com.nova.LemonDemo.adapter.VideoAdapter;
 import com.nova.LemonDemo.adapter.VideoFeedHolder;
+import com.nova.LemonDemo.bean.Constant;
+import com.nova.LemonDemo.bean.LemonVideoBean;
 import com.nova.LemonDemo.bean.TabFragMainBeanItemBean;
+import com.nova.LemonDemo.control.ScrollSpeedLinearLayoutManger;
+import com.nova.LemonDemo.net.LemonVideoService;
 import com.nova.LemonDemo.utils.StateBarUtils;
 import com.nova.LemonDemo.utils.VisibilePercentsUtils;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MainActivity extends AppCompatActivity
-        implements VideoFeedHolder.OnHolderVideoFeedListener,
-        OnVideoPlayerListener, View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements
+        VideoFeedHolder.OnHolderVideoFeedListener, OnVideoPlayerListener,
+        View.OnClickListener, SwipeRefreshLayout.OnRefreshListener {
 
     @BindView(R.id.rl_video)
     RecyclerView rlVideo;
@@ -46,6 +64,8 @@ public class MainActivity extends AppCompatActivity
     RelativeLayout rlVideoFeed;
     @BindView(R.id.full_screen)
     FrameLayout fullScreen;
+    @BindView(R.id.srl_lemon)
+    SwipeRefreshLayout srlLemon;
     // 是否处于滚动状态
     private boolean mScrollState = false;
     // item 的位置
@@ -61,7 +81,7 @@ public class MainActivity extends AppCompatActivity
     // 加载数据相关
     private List<TabFragMainBeanItemBean> itemBeens = new ArrayList<>();
     // 布局相关
-    private LinearLayoutManager layoutManager;
+    private ScrollSpeedLinearLayoutManger layoutManager;
     private VideoAdapter adapter;
     // 播放器
     private LVideoView lVideoView;
@@ -70,6 +90,7 @@ public class MainActivity extends AppCompatActivity
     private long mDuration = 0;
 
     private boolean orientation = false;// 默认为竖屏的情况
+    TabFragMainBeanItemBean itemBean;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -79,9 +100,12 @@ public class MainActivity extends AppCompatActivity
         StateBarUtils.setTranslucentColor(this);// 沉浸式状态栏
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        initSlidingMenu();
         initArgs();
         initView();
-        adapter.setList(itemBeens);
+        freshLayout();
+        // adapter.setNewData(itemBeens);
     }
 
     /**
@@ -90,7 +114,7 @@ public class MainActivity extends AppCompatActivity
     public void initArgs() {
         adapter = new VideoAdapter(this);
         for (int i = 0; i < 10; i++) {
-            TabFragMainBeanItemBean itemBean = new TabFragMainBeanItemBean();
+            itemBean = new TabFragMainBeanItemBean();
             itemBean.title = "看我的厉害:" + i;
             itemBean.video_url = "http://rmrbtest-image.peopleapp.com/upload/video/201707/1499914158feea8c512f348b4a.mp4";
             itemBean.id = "" + i;
@@ -101,13 +125,13 @@ public class MainActivity extends AppCompatActivity
     /**
      * 初始化侧滑菜单
      */
-    public void initSlidingMenu(){
+    public void initSlidingMenu() {
         SlidingMenu menu = new SlidingMenu(this);
         menu.setMode(SlidingMenu.RIGHT);
         // 设置触摸屏幕的模式
         menu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
         menu.setShadowWidthRes(R.dimen.shadow_width);
-//        menu.setShadowDrawable(R.drawable.shadow);
+        // menu.setShadowDrawable(R.drawable.shadow);
 
         // 设置滑动菜单视图的宽度
         menu.setBehindOffsetRes(R.dimen.slidingmenu_offset);
@@ -118,7 +142,7 @@ public class MainActivity extends AppCompatActivity
          * section of the SlidingMenu, while SLIDING_CONTENT does not.
          */
         menu.attachToActivity(this, SlidingMenu.SLIDING_CONTENT);
-        //为侧滑菜单设置布局
+        // 为侧滑菜单设置布局
         menu.setMenu(R.layout.right_sliding_menu);
     }
 
@@ -127,11 +151,12 @@ public class MainActivity extends AppCompatActivity
      */
     public void initView() {
         lVideoView = new LVideoView(this);// 初始化播放器
-        layoutManager = new LinearLayoutManager(this);
+        layoutManager = new ScrollSpeedLinearLayoutManger(this);
         rlVideo.setLayoutManager(layoutManager);
         adapter.setRecyclerView(rlVideo);
         rlVideo.setAdapter(adapter);
-        adapter.setList(itemBeens);
+        getHttp();
+        // adapter.setList(itemBeens);
         initListener();
     }
 
@@ -144,6 +169,55 @@ public class MainActivity extends AppCompatActivity
         tvVideoCarry.setEnabled(false);
         lVideoView.setOnVideoPlayerListener(this);
         rlVideo.addOnScrollListener(new VideoFeedScrollListener());
+        srlLemon.setOnRefreshListener(this);
+    }
+
+    /**
+     * 使用(SwipeRefreshLayout + RecyclerView)方式实现简单的下拉刷新
+     */
+    private void freshLayout() {
+        // 使用(SwipeRefreshLayout + RecyclerView)方式实现简单的下拉刷新
+        srlLemon.setColorSchemeColors(Color.RED, Color.BLUE, Color.GREEN,
+                Color.YELLOW);
+        srlLemon.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        srlLemon.setRefreshing(false);// 取消进度框
+                        Toast.makeText(getApplication(), "刷新成功",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    @Override
+    public void onRefresh() {
+        /*
+         * Observable .timer(2, TimeUnit.SECONDS,
+         * AndroidSchedulers.mainThread()) .map(new Func1<Long, Object>() {
+         * 
+         * @Override public Object call(Long aLong) { fetchingNewData();
+         * swipeRefreshLayout.setRefreshing(false);
+         * adapter.notifyDataSetChanged(); Toast.makeText(MainActivity.this,
+         * "Refresh Finished!", Toast.LENGTH_SHORT).show(); return null; }
+         * }).subscribe();
+         */
+        Observable.timer(2, TimeUnit.SECONDS, AndroidSchedulers.mainThread())
+                .map(new Function<Long, Object>() {
+                    @Override
+                    public Object apply(@NonNull Long aLong) throws Exception {
+                        fetchingNewData();
+                        srlLemon.setRefreshing(false);
+                        adapter.notifyDataSetChanged();
+                        Toast.makeText(MainActivity.this, "Refresh Finished!",
+                                Toast.LENGTH_SHORT).show();
+                        return null;
+                    }
+                }).subscribe();
+    }
+
+    // 下拉刷新加载数据
+    private void fetchingNewData() {
     }
 
     /**
@@ -159,7 +233,7 @@ public class MainActivity extends AppCompatActivity
             case RecyclerView.SCROLL_STATE_IDLE:// 停止滑动
                 mScrollState = false;
                 // 滑动停止和松开手指时，调用此方法 进行播放
-                aoutPlayVideo(recyclerView);
+                autoPlayVideo(recyclerView);
                 break;
             case RecyclerView.SCROLL_STATE_DRAGGING:// 用户用手指滚动
                 mScrollState = true;
@@ -190,7 +264,7 @@ public class MainActivity extends AppCompatActivity
                 } else { // 停止 第一次进入时调用此方法，进行播放第一个
                     ((LinearLayoutManager) rlVideo.getLayoutManager())
                             .scrollToPositionWithOffset(itemPosition, 20);
-                    aoutPlayVideo(rlVideo);
+                    autoPlayVideo(rlVideo);
                 }
             }
         }
@@ -237,7 +311,7 @@ public class MainActivity extends AppCompatActivity
      *
      * @param recyclerView
      */
-    private void aoutPlayVideo(final RecyclerView recyclerView) {
+    private void autoPlayVideo(final RecyclerView recyclerView) {
         if (!lVideoView.isPlayer()) {
             VideoFeedHolder childViewHolder = (VideoFeedHolder) recyclerView
                     .findViewHolderForAdapterPosition(itemPosition);
@@ -383,9 +457,11 @@ public class MainActivity extends AppCompatActivity
             }
             itemPosition = itemPosition + 1;
             playerPosition = itemPosition;
-            ((LinearLayoutManager) rlVideo.getLayoutManager())
-                    .scrollToPositionWithOffset(playerPosition, 20);
-            aoutPlayVideo(rlVideo);
+            rlVideo.smoothScrollToPosition(itemPosition);
+            //
+            // ((LinearLayoutManager) rlVideo.getLayoutManager())
+            // .scrollToPositionWithOffset(playerPosition, 20);
+            // autoPlayVideo(rlVideo);
         }
     }
 
@@ -456,8 +532,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void videoWifiStart() { // 无WiFi的情况下继续播放
-        aoutPlayVideo(rlVideo);
+    public void videoWifiStart() {
+        // 无WiFi的情况下继续播放
+        autoPlayVideo(rlVideo);
     }
 
     @Override
@@ -481,9 +558,10 @@ public class MainActivity extends AppCompatActivity
             // 开始播放下一个
             itemPosition = itemPosition + 1;
             playerPosition = itemPosition;
-            ((LinearLayoutManager) rlVideo.getLayoutManager())
-                    .scrollToPositionWithOffset(itemPosition, 20);
-            aoutPlayVideo(rlVideo);
+            rlVideo.smoothScrollToPosition(itemPosition);
+            // ((LinearLayoutManager) rlVideo.getLayoutManager())
+            // .scrollToPositionWithOffset(itemPosition, 20);
+            // autoPlayVideo(rlVideo);
             break;
         case R.id.iv_close_video_feed:
             finish();
@@ -533,5 +611,40 @@ public class MainActivity extends AppCompatActivity
     protected void onDestroy() {
         super.onDestroy();
         lVideoView.removeAllViews();
+    }
+
+    // 进行网络请求
+    private void getHttp() {
+        Retrofit retrofit = new Retrofit.Builder().baseUrl(Constant.LEMON_VIDEO)
+                .addConverterFactory(GsonConverterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .build();
+        LemonVideoService myService = retrofit.create(LemonVideoService.class);
+
+        myService.getLemonVideo(1).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<LemonVideoBean>() {
+
+                    @Override
+                    public void onSubscribe(@NonNull Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(@NonNull LemonVideoBean lemonVideoBean) {
+                        adapter.setNewData(lemonVideoBean.getSublist());
+                        srlLemon.setRefreshing(false); // 让SwipeRefreshLayout关闭刷新
+
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+                    }
+
+                    @Override
+                    public void onComplete() {
+                    }
+                });
+
     }
 }

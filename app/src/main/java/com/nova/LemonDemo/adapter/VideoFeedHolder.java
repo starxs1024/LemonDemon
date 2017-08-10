@@ -9,26 +9,27 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.nova.LemonDemo.R;
+import com.nova.LemonDemo.bean.LemonVideoBean;
 import com.nova.LemonDemo.bean.TabFragMainBeanItemBean;
 
 import java.util.List;
 
 /**
- * Created by Paraselene on 2017/8/9.
- * Email ：15616165649@163.com
+ * Created by Paraselene on 2017/8/9. Email ：15616165649@163.com
  */
 
-public class VideoFeedHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+public class VideoFeedHolder extends RecyclerView.ViewHolder
+        implements View.OnClickListener {
     private View video_masked;
     private TextView item_tv, tv_video_time, tv_video_readCount;
-    private List<TabFragMainBeanItemBean> mlist;
+    private List<LemonVideoBean.SublistBean> mlist;
     private ImageView img;
     private LinearLayout ll_not_wifi;
     private ImageView iv_video_feed_start;
     private TextView tv_video_shear, tv_video_more, tv_video_comment;
     private Context context;
     private FrameLayout ll_video;
-    private TabFragMainBeanItemBean itemBean;
+    private LemonVideoBean.SublistBean itemBean;
 
     /**
      * 初始化view
@@ -42,13 +43,20 @@ public class VideoFeedHolder extends RecyclerView.ViewHolder implements View.OnC
         this.ll_video = (FrameLayout) itemView.findViewById(R.id.ll_video);
         this.img = (ImageView) itemView.findViewById(R.id.img);
         this.video_masked = itemView.findViewById(R.id.video_masked);
-        this.tv_video_time = (TextView) itemView.findViewById(R.id.tv_video_time);
-        this.tv_video_readCount = (TextView) itemView.findViewById(R.id.tv_video_readCount);
-        this.iv_video_feed_start = (ImageView) itemView.findViewById(R.id.iv_video_feed_start);
-        this.ll_not_wifi = (LinearLayout) itemView.findViewById(R.id.ll_not_wifi);
-        this.tv_video_shear = (TextView) itemView.findViewById(R.id.tv_video_shear);
-        this.tv_video_more = (TextView) itemView.findViewById(R.id.tv_video_more);
-        this.tv_video_comment = (TextView) itemView.findViewById(R.id.tv_video_comment);
+        this.tv_video_time = (TextView) itemView
+                .findViewById(R.id.tv_video_time);
+        this.tv_video_readCount = (TextView) itemView
+                .findViewById(R.id.tv_video_readCount);
+        this.iv_video_feed_start = (ImageView) itemView
+                .findViewById(R.id.iv_video_feed_start);
+        this.ll_not_wifi = (LinearLayout) itemView
+                .findViewById(R.id.ll_not_wifi);
+        this.tv_video_shear = (TextView) itemView
+                .findViewById(R.id.tv_video_shear);
+        this.tv_video_more = (TextView) itemView
+                .findViewById(R.id.tv_video_more);
+        this.tv_video_comment = (TextView) itemView
+                .findViewById(R.id.tv_video_comment);
         this.context = context;
         bindListener();
     }
@@ -68,30 +76,29 @@ public class VideoFeedHolder extends RecyclerView.ViewHolder implements View.OnC
      *
      * @param position
      */
-    public void update(int position, List<TabFragMainBeanItemBean> mlist) {
+    public void update(int position, List<LemonVideoBean.SublistBean> mlist) {
         this.mlist = mlist;
         itemBean = mlist.get(position);
-        item_tv.setText(itemBean.title);
+        item_tv.setText(itemBean.getV_title());
     }
-
 
     /**
      * 判断是不是WiFi的情况
      */
     public void playerWifi() {
-//        if (Constants.VIDEO_FEED_WIFI) {
-//            ll_not_wifi.setVisibility(View.GONE);
-//            iv_video_feed_start.setEnabled(false);
-//        } else {
-//            int netType = NetChangeManager.getInstance().getNetType();
-//            if (netType != 1) {// 不是WiFi下的情况
-//                ll_not_wifi.setVisibility(View.VISIBLE);
-//                iv_video_feed_start.setEnabled(true);
-//            } else {
-//                ll_not_wifi.setVisibility(View.GONE);
-//                iv_video_feed_start.setEnabled(false);
-//            }
-//        }
+        // if (Constants.VIDEO_FEED_WIFI) {
+        // ll_not_wifi.setVisibility(View.GONE);
+        // iv_video_feed_start.setEnabled(false);
+        // } else {
+        // int netType = NetChangeManager.getInstance().getNetType();
+        // if (netType != 1) {// 不是WiFi下的情况
+        // ll_not_wifi.setVisibility(View.VISIBLE);
+        // iv_video_feed_start.setEnabled(true);
+        // } else {
+        // ll_not_wifi.setVisibility(View.GONE);
+        // iv_video_feed_start.setEnabled(false);
+        // }
+        // }
     }
 
     /**
@@ -110,30 +117,28 @@ public class VideoFeedHolder extends RecyclerView.ViewHolder implements View.OnC
         video_masked.setVisibility(View.GONE);
     }
 
-
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.iv_video_feed_start:
-//                Constants.VIDEO_FEED_WIFI = true;
-                ll_not_wifi.setVisibility(View.GONE);
-                iv_video_feed_start.setEnabled(false);
-                if (listener != null) {
-                    listener.videoWifiStart();
-                }
-                break;
-            case R.id.tv_video_shear:
-                if (listener != null) {
+        case R.id.iv_video_feed_start:
+            // Constants.VIDEO_FEED_WIFI = true;
+            ll_not_wifi.setVisibility(View.GONE);
+            iv_video_feed_start.setEnabled(false);
+            if (listener != null) {
+                listener.videoWifiStart();
+            }
+            break;
+        case R.id.tv_video_shear:
+            if (listener != null) {
 
-                }
-                break;
-            case R.id.tv_video_comment:
-                break;
-            case R.id.tv_video_more:
-                break;
+            }
+            break;
+        case R.id.tv_video_comment:
+            break;
+        case R.id.tv_video_more:
+            break;
         }
     }
-
 
     public interface OnHolderVideoFeedListener {
         void videoWifiStart();
@@ -150,7 +155,8 @@ public class VideoFeedHolder extends RecyclerView.ViewHolder implements View.OnC
      *
      * @param listener
      */
-    public void registerVideoPlayerListener(VideoFeedHolder.OnHolderVideoFeedListener listener) {
+    public void registerVideoPlayerListener(
+            VideoFeedHolder.OnHolderVideoFeedListener listener) {
         this.listener = listener;
     }
 

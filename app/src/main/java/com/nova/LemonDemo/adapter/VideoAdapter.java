@@ -7,12 +7,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.nova.LemonDemo.R;
+import com.nova.LemonDemo.bean.LemonVideoBean;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Paraselene on 2017/8/9.
- * Email ：15616165649@163.com
+ * Created by Paraselene on 2017/8/9. Email ：15616165649@163.com
  */
 
 public class VideoAdapter extends RecyclerView.Adapter<VideoFeedHolder> {
@@ -31,8 +32,8 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoFeedHolder> {
         return new VideoFeedHolder(inflater, context);
     }
 
-    public void setList(List mlist) {
-        this.mlist = mlist;
+    public void setNewData(List<LemonVideoBean.SublistBean> data) {
+        mlist = data == null ? new ArrayList() : data;
         this.mNotify();
     }
 
