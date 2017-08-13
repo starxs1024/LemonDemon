@@ -30,7 +30,7 @@ public class LemonNetData {
                             throws Exception {
                         List<LemonVideoBean.SublistBean> data = lemonVideoBean
                                 .getSublist();
-                        adapter.addData(data);
+//                        adapter.addData(data);
                         // mTotalCounter +=1;
                         // mCurrentCounter = mTotalCounter;
                         // videoRecyclerAdapter

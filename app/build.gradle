@@ -24,6 +24,8 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+    //上拉加载下拉刷新
+    compile 'com.github.Aspsine:SwipeToLoadLayout:1.0.4'
     //快速流畅图片滑动框架
     compile 'com.github.bumptech.glide:glide:3.7.0'
     //butterknife    不加这句“annotationProcessor......”会出空指针异常

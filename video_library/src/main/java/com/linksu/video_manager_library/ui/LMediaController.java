@@ -32,13 +32,8 @@ import java.text.DecimalFormat;
 import java.util.Locale;
 
 /**
- * ================================================
- * 作    者：linksus
- * 版    本：1.0
- * 创建日期：7/24 0024
- * 描    述：
- * 修订历史：
- * ================================================
+ * ================================================ 作 者：linksus 版 本：1.0
+ * 创建日期：7/24 0024 描 述： 修订历史： ================================================
  */
 public class LMediaController extends FrameLayout implements IMediaController {
 
@@ -75,9 +70,7 @@ public class LMediaController extends FrameLayout implements IMediaController {
      */
     private boolean mInstantSeeking = true;
     /**
-     * 对外暴露的视频播放器显示控制开关,默认显示
-     * true:显示控制器
-     * false：不显示控制器
+     * 对外暴露的视频播放器显示控制开关,默认显示 true:显示控制器 false：不显示控制器
      */
     private boolean mControllerSwitch = true;
     private boolean isAdvert = false;
@@ -115,7 +108,8 @@ public class LMediaController extends FrameLayout implements IMediaController {
      * 播放进度实时回调
      */
     public static interface OnVideoPlayingCallBack {
-        void onVideoPlaying(long currentPosition, long mDuration, int mPlayStatus);
+        void onVideoPlaying(long currentPosition, long mDuration,
+                int mPlayStatus);
     }
 
     private OnVideoPlayingCallBack onVideoPlayingCallBack;
@@ -131,13 +125,15 @@ public class LMediaController extends FrameLayout implements IMediaController {
         init();
     }
 
-    public LMediaController(@NonNull Context context, @Nullable AttributeSet attrs) {
+    public LMediaController(@NonNull Context context,
+            @Nullable AttributeSet attrs) {
         super(context, attrs);
         this.context = context;
         init();
     }
 
-    public LMediaController(@NonNull Context context, @Nullable AttributeSet attrs, @AttrRes int defStyleAttr) {
+    public LMediaController(@NonNull Context context,
+            @Nullable AttributeSet attrs, @AttrRes int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
@@ -145,20 +141,32 @@ public class LMediaController extends FrameLayout implements IMediaController {
      * 初始化
      */
     protected void init() {
-        mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        View rootView = LayoutInflater.from(context).inflate(R.layout.layout_video_controller, this);
-        llTopContainer = (LinearLayout) rootView.findViewById(R.id.ll_layout_media_controller_top_container);
-        tvTitle = (TextView) rootView.findViewById(R.id.tv_layout_media_controller_title);
-        llMoreContainer = (LinearLayout) rootView.findViewById(R.id.ll_layout_media_controller_more_container);
-        imgVideoPlay = (ImageView) rootView.findViewById(R.id.list_video_btn_play);
-        imgVideoFullScreen = (ImageView) rootView.findViewById(R.id.list_video_btn_all);
-        tvCurrentTime = (TextView) rootView.findViewById(R.id.list_video_tv_current_time);
-        tvAllTime = (TextView) rootView.findViewById(R.id.list_video_tv_all_time);
+        mAudioManager = (AudioManager) context
+                .getSystemService(Context.AUDIO_SERVICE);
+        View rootView = LayoutInflater.from(context)
+                .inflate(R.layout.layout_video_controller, this);
+        llTopContainer = (LinearLayout) rootView
+                .findViewById(R.id.ll_layout_media_controller_top_container);
+        tvTitle = (TextView) rootView
+                .findViewById(R.id.tv_layout_media_controller_title);
+        llMoreContainer = (LinearLayout) rootView
+                .findViewById(R.id.ll_layout_media_controller_more_container);
+        imgVideoPlay = (ImageView) rootView
+                .findViewById(R.id.list_video_btn_play);
+        imgVideoFullScreen = (ImageView) rootView
+                .findViewById(R.id.list_video_btn_all);
+        tvCurrentTime = (TextView) rootView
+                .findViewById(R.id.list_video_tv_current_time);
+        tvAllTime = (TextView) rootView
+                .findViewById(R.id.list_video_tv_all_time);
         skVideoSeek = (SeekBar) rootView.findViewById(R.id.list_video_seek);
-        fl_voide_download = (FrameLayout) rootView.findViewById(R.id.fl_voide_download);
+        fl_voide_download = (FrameLayout) rootView
+                .findViewById(R.id.fl_voide_download);
 
-        pg_voide_download = (NewCircleTextProgressbar) rootView.findViewById(R.id.pg_voide_download);
-        iv_video_download = (ImageView) rootView.findViewById(R.id.iv_video_download);
+        pg_voide_download = (NewCircleTextProgressbar) rootView
+                .findViewById(R.id.pg_voide_download);
+        iv_video_download = (ImageView) rootView
+                .findViewById(R.id.iv_video_download);
         skVideoSeek.setThumbOffset(1);
         skVideoSeek.setMax(1000);
         bindListener();
@@ -243,42 +251,44 @@ public class LMediaController extends FrameLayout implements IMediaController {
                 if (onVideoPlayBtnClickListener != null) {
                     onVideoPlayBtnClickListener.setOnVideoPlayBtnClick(true);
                 }
-//                NetChangeManager.getInstance().adjustNetBeforDownlaod(new NetChangeManager.OnNetAdjustCallBack() {
-//                    @Override
-//                    public void onGranted() {// wifi条件下自动回调
-//                        isNetChangeDialogNeedShow = false;
-//                        mController.start();
-//                        isVideoPlaying = true;
-//                        if (onVideoPlayBtnClickListener != null) {
-//                            onVideoPlayBtnClickListener.setOnVideoPlayBtnClick(true);
-//                        }
-//                    }
-//
-//                    @Override
-//                    public void onErro(String msg) {    // 无网络情况下回调
-//
-//                    }
-//
-//                    @Override
-//                    public boolean onStartNeedShow() {  // 是否需要弹出流量显示框
-//                        return isNetChangeDialogNeedShow;
-//                    }
-//
-//                    @Override
-//                    public boolean onMidNeedShow() {    // wifi切回为流量情况下 暂停播放 弹框逻辑以封装之网络处理内部
-//                        mController.pause();
-//                        isVideoPlaying = false;
-//                        if (onVideoPlayBtnClickListener != null) {
-//                            onVideoPlayBtnClickListener.setOnVideoPlayBtnClick(false);
-//                        }
-//                        return isNetChangeDialogNeedShow;
-//                    }
-//
-//                    @Override
-//                    public void onCancel() {            // 取消
-//                        isNetChangeDialogNeedShow = false;
-//                    }
-//                });
+                // NetChangeManager.getInstance().adjustNetBeforDownlaod(new
+                // NetChangeManager.OnNetAdjustCallBack() {
+                // @Override
+                // public void onGranted() {// wifi条件下自动回调
+                // isNetChangeDialogNeedShow = false;
+                // mController.start();
+                // isVideoPlaying = true;
+                // if (onVideoPlayBtnClickListener != null) {
+                // onVideoPlayBtnClickListener.setOnVideoPlayBtnClick(true);
+                // }
+                // }
+                //
+                // @Override
+                // public void onErro(String msg) { // 无网络情况下回调
+                //
+                // }
+                //
+                // @Override
+                // public boolean onStartNeedShow() { // 是否需要弹出流量显示框
+                // return isNetChangeDialogNeedShow;
+                // }
+                //
+                // @Override
+                // public boolean onMidNeedShow() { // wifi切回为流量情况下 暂停播放
+                // 弹框逻辑以封装之网络处理内部
+                // mController.pause();
+                // isVideoPlaying = false;
+                // if (onVideoPlayBtnClickListener != null) {
+                // onVideoPlayBtnClickListener.setOnVideoPlayBtnClick(false);
+                // }
+                // return isNetChangeDialogNeedShow;
+                // }
+                //
+                // @Override
+                // public void onCancel() { // 取消
+                // isNetChangeDialogNeedShow = false;
+                // }
+                // });
             }
             updatePlayBtnUI();
         }
@@ -293,14 +303,17 @@ public class LMediaController extends FrameLayout implements IMediaController {
                 return;
             }
             // 控制方向切换
-            int screenOrientation = ((Activity) context).getRequestedOrientation();
+            int screenOrientation = ((Activity) context)
+                    .getRequestedOrientation();
             switch (screenOrientation) {
-                case ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE:
-                    ((Activity) context).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-                    break;
-                case ActivityInfo.SCREEN_ORIENTATION_PORTRAIT:
-                    ((Activity) context).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                    break;
+            case ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE:
+                ((Activity) context).setRequestedOrientation(
+                        ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                break;
+            case ActivityInfo.SCREEN_ORIENTATION_PORTRAIT:
+                ((Activity) context).setRequestedOrientation(
+                        ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                break;
             }
             // 图片变换
             updateFullScreenBtnUI();
@@ -309,7 +322,8 @@ public class LMediaController extends FrameLayout implements IMediaController {
 
     private SeekBar.OnSeekBarChangeListener mSeekListener = new SeekBar.OnSeekBarChangeListener() {
         @Override
-        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        public void onProgressChanged(SeekBar seekBar, int progress,
+                boolean fromUser) {
             // 防止调用seekBar.setProgress时回调
             if (!fromUser) {
                 return;
@@ -388,7 +402,7 @@ public class LMediaController extends FrameLayout implements IMediaController {
 
     @Override
     public void show(int timeout) {
-// 设置控件显示
+        // 设置控件显示
         // 发送消息给handler开始循环发送消息实现播放进度更新
         if (!isControllerShow) {
             if (fraParentLayout == null) {
@@ -406,7 +420,9 @@ public class LMediaController extends FrameLayout implements IMediaController {
         mHandler.sendEmptyMessage(SET_PROGRESS_UPDATE_UI);
         if (timeout != 0) {
             mHandler.removeMessages(SET_CONTROLLER_VISIBLE_GONE);
-            mHandler.sendMessageDelayed(mHandler.obtainMessage(SET_CONTROLLER_VISIBLE_GONE), timeout);
+            mHandler.sendMessageDelayed(
+                    mHandler.obtainMessage(SET_CONTROLLER_VISIBLE_GONE),
+                    timeout);
         }
     }
 
@@ -443,7 +459,9 @@ public class LMediaController extends FrameLayout implements IMediaController {
      * @param parentLayout
      */
     public void setControllerParent(FrameLayout parentLayout) {
-        setControllerParent(parentLayout, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        setControllerParent(parentLayout,
+                new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
     /**
@@ -451,7 +469,8 @@ public class LMediaController extends FrameLayout implements IMediaController {
      *
      * @param parentLayout
      */
-    public void setControllerParent(FrameLayout parentLayout, ViewGroup.LayoutParams layoutParams) {
+    public void setControllerParent(FrameLayout parentLayout,
+            ViewGroup.LayoutParams layoutParams) {
         if (parentLayout == null) {
             return;
         }
@@ -459,7 +478,8 @@ public class LMediaController extends FrameLayout implements IMediaController {
         fraParentLayout.addView(this, layoutParams);
     }
 
-    public void setLayoutParamsToControllerParent(ViewGroup.LayoutParams layoutParams) {
+    public void setLayoutParamsToControllerParent(
+            ViewGroup.LayoutParams layoutParams) {
         if (layoutParams == null) {
             return;
         }
@@ -471,9 +491,7 @@ public class LMediaController extends FrameLayout implements IMediaController {
     }
 
     /**
-     * 设置是否显示控制器
-     * true:显示控制器
-     * false：不显示控制器
+     * 设置是否显示控制器 true:显示控制器 false：不显示控制器
      */
     public void setControllerSwitch(boolean isShow) {
         this.mControllerSwitch = isShow;
@@ -488,35 +506,38 @@ public class LMediaController extends FrameLayout implements IMediaController {
             long position;
             int code = msg.what;
             switch (code) {
-                case SET_CONTROLLER_VISIBLE_GONE:
-                    hide();
-                    break;
-                case SET_PROGRESS_UPDATE_UI:
-                    position = setProgressToUI();
-                    // 关联了seekBar的与当前播放时间的关键点
-                    // 不停的发送handler实现实时查询
-                    if (!isDragging && isControllerShow) {
-                        msg = obtainMessage(SET_PROGRESS_UPDATE_UI);
-                        sendMessageDelayed(msg, 1000 - (position % 1000));
-                        updatePlayBtnUI();
+            case SET_CONTROLLER_VISIBLE_GONE:
+                hide();
+                break;
+            case SET_PROGRESS_UPDATE_UI:
+                position = setProgressToUI();
+                // 关联了seekBar的与当前播放时间的关键点
+                // 不停的发送handler实现实时查询
+                if (!isDragging && isControllerShow) {
+                    msg = obtainMessage(SET_PROGRESS_UPDATE_UI);
+                    sendMessageDelayed(msg, 1000 - (position % 1000));
+                    updatePlayBtnUI();
+                }
+                break;
+            case SET_VIDEO_PLAYING_CALLBACK:
+                if (onVideoPlayingCallBack == null) {
+                    return;
+                }
+                if (mController != null) {
+                    long currentPos = mController.getCurrentPosition();
+                    long mDuration = mController.getDuration();
+                    int playingStatus = mController.isPlaying() ? 1 : 0;
+                    if (mController.isPlaying()) {
+                        onVideoPlayingCallBack.onVideoPlaying(currentPos,
+                                mDuration, playingStatus);
+                    } else {
+                        onVideoPlayingCallBack.onVideoPlaying(currentPos,
+                                mDuration, playingStatus);
                     }
-                    break;
-                case SET_VIDEO_PLAYING_CALLBACK:
-                    if (onVideoPlayingCallBack == null) {
-                        return;
-                    }
-                    if (mController != null) {
-                        long currentPos = mController.getCurrentPosition();
-                        long mDuration = mController.getDuration();
-                        int playingStatus = mController.isPlaying() ? 1 : 0;
-                        if (mController.isPlaying()) {
-                            onVideoPlayingCallBack.onVideoPlaying(currentPos, mDuration, playingStatus);
-                        } else {
-                            onVideoPlayingCallBack.onVideoPlaying(currentPos, mDuration, playingStatus);
-                        }
-                        sendEmptyMessageDelayed(SET_VIDEO_PLAYING_CALLBACK, mPlayingCallbackSpace);
-                    }
-                    break;
+                    sendEmptyMessageDelayed(SET_VIDEO_PLAYING_CALLBACK,
+                            mPlayingCallbackSpace);
+                }
+                break;
             }
             super.handleMessage(msg);
         }
@@ -524,7 +545,8 @@ public class LMediaController extends FrameLayout implements IMediaController {
 
     private void disableUnsupportedButtons() {
         try {
-            if (null != mController && imgVideoPlay != null && !mController.canPause()) {
+            if (null != mController && imgVideoPlay != null
+                    && !mController.canPause()) {
                 imgVideoPlay.setEnabled(false);
             }
         } catch (IncompatibleClassChangeError ex) {
@@ -539,9 +561,10 @@ public class LMediaController extends FrameLayout implements IMediaController {
             return;
         }
         if (mController.isPlaying()) {
-            imgVideoPlay.setImageResource(R.drawable.icon_live_controller_pause);
+            imgVideoPlay
+                    .setImageResource(R.drawable.icon_live_controller_pause);
             if (onShowHidListenner != null) {
-                onShowHidListenner.onStart();//播放状态
+                onShowHidListenner.onStart();// 播放状态
             }
         } else {
             imgVideoPlay.setImageResource(R.drawable.icon_live_controller_play);
@@ -559,20 +582,22 @@ public class LMediaController extends FrameLayout implements IMediaController {
         // 控制方向切换
         int screenOrientation = ((Activity) context).getRequestedOrientation();
         switch (screenOrientation) {
-            case ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE:
-                llMoreContainer.setVisibility(GONE);
+        case ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE:
+            llMoreContainer.setVisibility(GONE);
+            fl_voide_download.setVisibility(GONE);
+            imgVideoFullScreen
+                    .setImageResource(R.drawable.video_list_small_screen);
+            break;
+        case ActivityInfo.SCREEN_ORIENTATION_PORTRAIT:
+            llMoreContainer.setVisibility(VISIBLE);
+            if (isNewsDetailV) { // 带视频的新闻
                 fl_voide_download.setVisibility(GONE);
-                imgVideoFullScreen.setImageResource(R.drawable.video_list_small_screen);
-                break;
-            case ActivityInfo.SCREEN_ORIENTATION_PORTRAIT:
-                llMoreContainer.setVisibility(VISIBLE);
-                if (isNewsDetailV) { //带视频的新闻
-                    fl_voide_download.setVisibility(GONE);
-                } else {
-                    fl_voide_download.setVisibility(VISIBLE);
-                }
-                imgVideoFullScreen.setImageResource(R.drawable.video_list_full_screen);
-                break;
+            } else {
+                fl_voide_download.setVisibility(VISIBLE);
+            }
+            imgVideoFullScreen
+                    .setImageResource(R.drawable.video_list_full_screen);
+            break;
         }
     }
 
@@ -581,14 +606,16 @@ public class LMediaController extends FrameLayout implements IMediaController {
      *
      * @param listener
      */
-    public void setOnVideoPlayBtnClickListener(OnVideoPlayBtnClickListener listener) {
+    public void setOnVideoPlayBtnClickListener(
+            OnVideoPlayBtnClickListener listener) {
         if (listener == null) {
             return;
         }
         this.onVideoPlayBtnClickListener = listener;
     }
 
-    public void startVideoPlayingCallback(OnVideoPlayingCallBack listener, int callbackSpace) {
+    public void startVideoPlayingCallback(OnVideoPlayingCallBack listener,
+            int callbackSpace) {
         if (listener == null) {
             return;
         }
@@ -608,6 +635,7 @@ public class LMediaController extends FrameLayout implements IMediaController {
         this.onVideoPlayingCallBack = null;
         this.mVideoPlayClick = null;
     }
+
     public void topContainer() {
         llTopContainer.setEnabled(false);
         llTopContainer.setVisibility(INVISIBLE);
@@ -624,9 +652,9 @@ public class LMediaController extends FrameLayout implements IMediaController {
         }
         mController.seekTo(position);
         float percent = (float) ((double) position / (double) mDuration);
-        DecimalFormat fnum = new DecimalFormat("##0.0");
+        DecimalFormat fnum = new DecimalFormat("##0.###E0");
         float c_percent = 0;
-        c_percent = Float.parseFloat(fnum.format(percent));
+        c_percent = Float.parseFloat(fnum.format(percent).trim());
         skVideoSeek.setProgress((int) (c_percent * 100));
     }
 

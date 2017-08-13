@@ -1,8 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
+
+    <!-- android:layout_height="?attr/actionBarSize"-->
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="?attr/colorPrimary"
+        android:gravity="center">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:id="@+id/toolbar_main_left"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:weightSum="1">
+
+                <ImageView
+                    android:id="@+id/iv_sound"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:clickable="true"
+                    android:scaleType="centerCrop" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:gravity="center"
+                android:text="Lemon"
+                android:textSize="25sp" />
+
+            <LinearLayout
+                android:id="@+id/toolbar_main_reight"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:weightSum="1">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:layout_marginRight="10dp"
+                    android:background="@drawable/more" />
+            </LinearLayout>
+        </LinearLayout>
+
+
+    </android.support.v7.widget.Toolbar>
+    >
 
     <RelativeLayout
         android:id="@+id/rl_video_feed"
@@ -10,17 +68,35 @@
         android:layout_height="match_parent"
         android:background="#000000">
 
-        <android.support.v4.widget.SwipeRefreshLayout
+        <!-- <android.support.v4.widget.SwipeRefreshLayout
+             android:id="@+id/srl_lemon"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
+         </android.support.v4.widget.SwipeRefreshLayout>-->
+        <com.aspsine.swipetoloadlayout.SwipeToLoadLayout
             android:id="@+id/srl_lemon"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-        </android.support.v4.widget.SwipeRefreshLayout>
+            android:layout_height="match_parent"
+            android:background="#e3e3e3"
+            tools:context=".MainActivity">
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/rl_video"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            <com.nova.LemonDemo.view.RefreshHeaderView
+                android:id="@id/swipe_refresh_header"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:gravity="center" />
 
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/swipe_target"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <com.nova.LemonDemo.view.LoadMoreFooterView
+                android:id="@id/swipe_load_more_footer"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:gravity="center" />
+        </com.aspsine.swipetoloadlayout.SwipeToLoadLayout>
 
 
         <ImageView

@@ -82,21 +82,13 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoFeedHolder> {
      */
     public void addData(List newData) {
         mlist.addAll(newData);
-//        notifyItemRangeInserted(mlist.size() - newData.size() + getHeaderLayoutCount(), newData.size());
-        this.mNotify();
         compatibilityDataSizeChanged(newData.size());
+        this.mNotify();
     }
-
-    /**
-     * compatible getLoadMoreViewCount and getEmptyViewCount may change
-     *
-     * @param size Need compatible data size
-     */
     private void compatibilityDataSizeChanged(int size) {
         final int dataSize = mlist == null ? 0 : mlist.size();
         if (dataSize == size) {
             notifyDataSetChanged();
         }
     }
-
 }
