@@ -1,1 +1,1 @@
-include ':app', ':video-library', ':sliding_menu_lib'
+include ':app', ':sliding_menu_lib', ':video_library'

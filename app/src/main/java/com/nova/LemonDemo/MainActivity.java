@@ -1,8 +1,12 @@
 package com.nova.LemonDemo;
 
+import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -10,8 +14,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -27,11 +33,16 @@ import com.nova.LemonDemo.adapter.VideoAdapter;
 import com.nova.LemonDemo.adapter.VideoFeedHolder;
 import com.nova.LemonDemo.bean.Constant;
 import com.nova.LemonDemo.bean.LemonVideoBean;
-import com.nova.LemonDemo.bean.TabFragMainBeanItemBean;
+import com.nova.LemonDemo.bean.LemonVideoBean;
+import com.nova.LemonDemo.control.NetChangeManager;
 import com.nova.LemonDemo.control.ScrollSpeedLinearLayoutManger;
+import com.nova.LemonDemo.dao.LemonNetData;
+import com.nova.LemonDemo.listener.ItemClickListener;
 import com.nova.LemonDemo.net.LemonVideoService;
+import com.nova.LemonDemo.receiver.NetworkConnectChangedReceiver;
 import com.nova.LemonDemo.utils.StateBarUtils;
 import com.nova.LemonDemo.utils.VisibilePercentsUtils;
+import com.nova.LemonDemo.utils.WindowsUtils;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -52,7 +63,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity implements
         VideoFeedHolder.OnHolderVideoFeedListener, OnVideoPlayerListener,
-        View.OnClickListener, SwipeRefreshLayout.OnRefreshListener {
+        View.OnClickListener, SwipeRefreshLayout.OnRefreshListener,
+        NetworkConnectChangedReceiver.ConnectChangedListener {
 
     @BindView(R.id.rl_video)
     RecyclerView rlVideo;
@@ -79,7 +91,11 @@ public class MainActivity extends AppCompatActivity implements
     private boolean isPause = false;// 是否暂停
     private boolean isThrumePause = false;// 是否手动暂停播放
     // 加载数据相关
-    private List<TabFragMainBeanItemBean> itemBeens = new ArrayList<>();
+    private List<LemonVideoBean> itemBeens = new ArrayList<>();
+    private List<LemonVideoBean.SublistBean> lemonBeens;
+    LemonNetData lemonNetData;
+    // 相关工具
+    WindowsUtils windowsUtils;
     // 布局相关
     private ScrollSpeedLinearLayoutManger layoutManager;
     private VideoAdapter adapter;
@@ -90,10 +106,13 @@ public class MainActivity extends AppCompatActivity implements
     private long mDuration = 0;
 
     private boolean orientation = false;// 默认为竖屏的情况
-    TabFragMainBeanItemBean itemBean;
+    private boolean isPrepared;
+
+    LemonVideoBean itemBean;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);// 去掉标题栏
         super.onCreate(savedInstanceState);
         getWindow().setFormat(PixelFormat.TRANSLUCENT);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);// 不锁屏
@@ -102,9 +121,11 @@ public class MainActivity extends AppCompatActivity implements
         ButterKnife.bind(this);
 
         initSlidingMenu();
+        getHttp();
         initArgs();
         initView();
         freshLayout();
+
         // adapter.setNewData(itemBeens);
     }
 
@@ -112,12 +133,24 @@ public class MainActivity extends AppCompatActivity implements
      * 加载布局之前的操作
      */
     public void initArgs() {
-        adapter = new VideoAdapter(this);
+        adapter = new VideoAdapter(this, new ItemClickListener() {
+            @Override
+            public void onItemClick(View v, Object object) {
+                // 手动点击下一个,暂停之前的 并显示蒙层
+                stopPlayer(playerPosition);
+                missVideoTips();
+                // 缓慢平滑的滚动到下一个
+                itemPosition = (int) object;
+                playerPosition = itemPosition;
+                rlVideo.smoothScrollToPosition(itemPosition);
+            }
+        });
+        windowsUtils = new WindowsUtils();
         for (int i = 0; i < 10; i++) {
-            itemBean = new TabFragMainBeanItemBean();
-            itemBean.title = "看我的厉害:" + i;
-            itemBean.video_url = "http://rmrbtest-image.peopleapp.com/upload/video/201707/1499914158feea8c512f348b4a.mp4";
-            itemBean.id = "" + i;
+            itemBean = new LemonVideoBean();
+            // itemBean.title = "看我的厉害:" + i;
+            // itemBean.video_url =
+            // "http://rmrbtest-image.peopleapp.com/upload/video/201707/1499914158feea8c512f348b4a.mp4";
             itemBeens.add(itemBean);
         }
     }
@@ -151,13 +184,15 @@ public class MainActivity extends AppCompatActivity implements
      */
     public void initView() {
         lVideoView = new LVideoView(this);// 初始化播放器
+        windowsUtils.setTransparentToStateBar(this);
         layoutManager = new ScrollSpeedLinearLayoutManger(this);
         rlVideo.setLayoutManager(layoutManager);
         adapter.setRecyclerView(rlVideo);
         rlVideo.setAdapter(adapter);
-        getHttp();
         // adapter.setList(itemBeens);
+        lemonNetData = new LemonNetData();
         initListener();
+
     }
 
     /**
@@ -192,39 +227,88 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onRefresh() {
-        /*
-         * Observable .timer(2, TimeUnit.SECONDS,
-         * AndroidSchedulers.mainThread()) .map(new Func1<Long, Object>() {
-         * 
-         * @Override public Object call(Long aLong) { fetchingNewData();
-         * swipeRefreshLayout.setRefreshing(false);
-         * adapter.notifyDataSetChanged(); Toast.makeText(MainActivity.this,
-         * "Refresh Finished!", Toast.LENGTH_SHORT).show(); return null; }
-         * }).subscribe();
-         */
-        Observable.timer(2, TimeUnit.SECONDS, AndroidSchedulers.mainThread())
-                .map(new Function<Long, Object>() {
-                    @Override
-                    public Object apply(@NonNull Long aLong) throws Exception {
-                        fetchingNewData();
-                        srlLemon.setRefreshing(false);
-                        adapter.notifyDataSetChanged();
-                        Toast.makeText(MainActivity.this, "Refresh Finished!",
-                                Toast.LENGTH_SHORT).show();
-                        return null;
-                    }
-                }).subscribe();
+        // Observable.timer(2, TimeUnit.SECONDS, AndroidSchedulers.mainThread())
+        // .map(new Function<Long, Object>() {
+        // @Override
+        // public Object apply(@NonNull Long aLong) throws Exception {
+        // fetchingNewData();
+        // srlLemon.setRefreshing(false);
+        // adapter.notifyDataSetChanged();
+        // Toast.makeText(MainActivity.this, "Refresh Finished!",
+        // Toast.LENGTH_SHORT).show();
+        // return null;
+        // }
+        // }).subscribe();
     }
 
-    // 下拉刷新加载数据
+    /**
+     * 下拉刷新加载数据
+     */
     private void fetchingNewData() {
+        Log.d("Da", "+++++++++++++++++++++++=");
+    }
+
+    @Override
+    public void wifiNetwork(boolean flag) {
+        autoPlayVideo(rlVideo);
+
+    }
+
+    @Override
+    public void dataNetwork(boolean flag) {
+        Log.e("linksu", "onReceive(dataNetwork:273) 切换到数据流量");
+        if (!Constant.VIDEO_FEED_WIFI) {
+            dataNetwork(itemPosition);
+            autoPlayVideo(rlVideo);
+        }
+    }
+
+    @Override
+    public void notNetWork() {
+
+    }
+
+    /**
+     * 数据流量时显示的逻辑
+     *
+     * @param position
+     */
+    private void dataNetwork(int position) {
+        VideoFeedHolder childViewHolder = (VideoFeedHolder) rlVideo
+                .findViewHolderForAdapterPosition(position);
+        if (childViewHolder != null) {
+            View itemView = childViewHolder.itemView;
+            FrameLayout frameLayout = (FrameLayout) itemView
+                    .findViewById(R.id.ll_video);
+            frameLayout.removeAllViews();
+            lVideoView.stopVideoPlay();
+            LemonVideoBean itemBean = itemBeens.get(position);
+            itemBean.videoProgress = currentPosition;
+            itemBean.mDuration = mDuration;
+            itemBeens.set(position, itemBean);
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus && Build.VERSION.SDK_INT >= 19) {
+            View decorView = getWindow().getDecorView();
+            decorView.setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
     }
 
     /**
      * 列表的滚动监听
      */
+
     private class VideoFeedScrollListener
             extends RecyclerView.OnScrollListener {
+        LinearLayoutManager linearManager = (LinearLayoutManager) layoutManager;
+
         @Override
         public void onScrollStateChanged(RecyclerView recyclerView,
                 int newState) {
@@ -234,6 +318,16 @@ public class MainActivity extends AppCompatActivity implements
                 mScrollState = false;
                 // 滑动停止和松开手指时，调用此方法 进行播放
                 autoPlayVideo(recyclerView);
+
+//                // 滑动状态停止并且剩余少于两个item时，自动加载下一页
+//                if (newState == RecyclerView.SCROLL_STATE_IDLE
+//                        && lastItemPosition + 2 >= linearManager
+//                                .getItemCount()) {
+//                    // new
+//                    // GetData().execute("http://gank.io/api/data/福利/10/"+(++page));
+//                    lemonNetData.getNetData(2,adapter);
+//
+//                }
                 break;
             case RecyclerView.SCROLL_STATE_DRAGGING:// 用户用手指滚动
                 mScrollState = true;
@@ -250,7 +344,6 @@ public class MainActivity extends AppCompatActivity implements
             RecyclerView.LayoutManager layoutManager = recyclerView
                     .getLayoutManager();
             if (layoutManager instanceof LinearLayoutManager) {
-                LinearLayoutManager linearManager = (LinearLayoutManager) layoutManager;
                 // 获取最后一个可见view的位置
                 lastItemPosition = linearManager.findLastVisibleItemPosition();
                 // 获取第一个可见view的位置
@@ -320,30 +413,36 @@ public class MainActivity extends AppCompatActivity implements
                 childViewHolder.registerVideoPlayerListener(this);
                 childViewHolder.goneMasked();
                 childViewHolder.playerWifi();
-                // int netType = NetChangeManager.getInstance().getNetType();
-                // if (netType == 1 || Constants.VIDEO_FEED_WIFI) { //
-                // WiFi的情况下，或者允许不是WiFi情况下继续播放
-                // 动态添加播放器
-                View itemView = childViewHolder.itemView;
-                FrameLayout frameLayout = (FrameLayout) itemView
-                        .findViewById(R.id.ll_video);
-                frameLayout.removeAllViews();
-                ViewGroup last = (ViewGroup) lVideoView.getParent();// 找到videoitemview的父类，然后remove
-                if (last != null && last.getChildCount() > 0) {
-                    last.removeAllViews();
+                if (!NetChangeManager.getInstance().hasNet()) { // 无网络的情况
+                    Toast.makeText(this, "无法连接到网络,请稍后再试", Toast.LENGTH_SHORT)
+                            .show();
+                } else {
+                    int netType = NetChangeManager.getInstance().getNetType();
+                    if (netType == 1 || Constant.VIDEO_FEED_WIFI) { // WiFi的情况下，或者允许不是WiFi情况下继续播放
+                        // 动态添加播放器
+                        View itemView = childViewHolder.itemView;
+                        FrameLayout frameLayout = (FrameLayout) itemView
+                                .findViewById(R.id.ll_video);
+                        frameLayout.removeAllViews();
+                        ViewGroup last = (ViewGroup) lVideoView.getParent();// 找到videoitemview的父类，然后remove
+                        if (last != null && last.getChildCount() > 0) {
+                            last.removeAllViews();
+                        }
+                        frameLayout.addView(lVideoView);
+                        // 获取播放进度
+                        LemonVideoBean itemBean = itemBeens.get(itemPosition);
+                        long videoProgress = itemBean.videoProgress;
+                        long duration = itemBean.mDuration;
+                        if (videoProgress != 0 && videoProgress != duration) { // 跳转到之前的进度，继续播放
+                            lVideoView.startLive(lemonBeens.get(itemPosition)
+                                    .getV_videolink());
+                            lVideoView.setSeekTo(videoProgress);
+                        } else {// 从头播放
+                            lVideoView.startLive(lemonBeens.get(itemPosition)
+                                    .getV_videolink());
+                        }
+                    }
                 }
-                frameLayout.addView(lVideoView);
-                // 获取播放进度
-                TabFragMainBeanItemBean itemBean = itemBeens.get(itemPosition);
-                long videoProgress = itemBean.videoProgress;
-                long duration = itemBean.mDuration;
-                if (videoProgress != 0 && videoProgress != duration) { // 跳转到之前的进度，继续播放
-                    lVideoView.startLive(itemBean.video_url);
-                    lVideoView.setSeekTo(videoProgress);
-                } else {// 从头播放
-                    lVideoView.startLive(itemBean.video_url);
-                }
-                // }
             }
         }
     }
@@ -359,7 +458,7 @@ public class MainActivity extends AppCompatActivity implements
         if (childViewHolder != null) {
             if (lVideoView.isPlayer()) { // 如果正在播放，则停止并记录播放进度，否则不调用这个方法
                 lVideoView.stopVideoPlay();
-                TabFragMainBeanItemBean itemBean = itemBeens.get(position);
+                LemonVideoBean itemBean = itemBeens.get(position);
                 itemBean.videoProgress = currentPosition;
                 itemBean.mDuration = mDuration;
                 itemBeens.set(position, itemBean);
@@ -434,16 +533,19 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onVideoPrepared() {
+        isPrepared = true;
     }
 
     @Override
     public void onVideoCompletion() {
         if (itemPosition != lastItemPosition) { // 若播放的不是最后一个，播放完成自动播放下一个
+            isPrepared = false;
+            missVideoTips();
             VideoFeedHolder childViewHolder = (VideoFeedHolder) rlVideo
                     .findViewHolderForAdapterPosition(itemPosition);
             if (childViewHolder != null) {
                 // 播放完成将之前的播放进度清空
-                TabFragMainBeanItemBean itemBean = itemBeens.get(itemPosition);
+                LemonVideoBean itemBean = itemBeens.get(itemPosition);
                 itemBean.videoProgress = 0;
                 itemBean.mDuration = 0;
                 itemBeens.set(itemPosition, itemBean);
@@ -458,10 +560,6 @@ public class MainActivity extends AppCompatActivity implements
             itemPosition = itemPosition + 1;
             playerPosition = itemPosition;
             rlVideo.smoothScrollToPosition(itemPosition);
-            //
-            // ((LinearLayoutManager) rlVideo.getLayoutManager())
-            // .scrollToPositionWithOffset(playerPosition, 20);
-            // autoPlayVideo(rlVideo);
         }
     }
 
@@ -500,15 +598,14 @@ public class MainActivity extends AppCompatActivity implements
         this.currentPosition = currentPosition;
         this.mDuration = mDuration;
         if (itemPosition != lastItemPosition) { // 若播放的不是最后一个，弹出播放下一个的提示
-            float percent = (float) ((double) currentPosition
-                    / (double) mDuration);
-            DecimalFormat fnum = new DecimalFormat("##0.0");
-            float c_percent = 0;
-            c_percent = Float.parseFloat(fnum.format(percent));
-            if (0.8 <= c_percent) {
-                videoTips();
-            } else {
-                missVideoTips();
+            int currentSeconds = (int) (currentPosition / 1000);
+            int totalSeconds = (int) (mDuration / 1000);
+            if (isPrepared) {
+                if ((totalSeconds - currentSeconds) <= 5) { // 播放时间小于等于5s 时提示
+                    videoTips();
+                } else {
+                    missVideoTips();
+                }
             }
         }
     }
@@ -533,7 +630,6 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void videoWifiStart() {
-        // 无WiFi的情况下继续播放
         autoPlayVideo(rlVideo);
     }
 
@@ -550,18 +646,13 @@ public class MainActivity extends AppCompatActivity implements
     public void onClick(View v) {// 点击事件
         switch (v.getId()) {
         case R.id.tv_video_carry:
-            // itemPosition = itemPosition + 1;
-            // rl_video.smoothScrollToPosition(itemPosition);
-            // rl_video.smoothScrollBy(0, rl_video.getHeight());
+            missVideoTips();
             // 手动点击下一个,暂停之前的
             stopPlayer(playerPosition);
             // 开始播放下一个
             itemPosition = itemPosition + 1;
             playerPosition = itemPosition;
             rlVideo.smoothScrollToPosition(itemPosition);
-            // ((LinearLayoutManager) rlVideo.getLayoutManager())
-            // .scrollToPositionWithOffset(itemPosition, 20);
-            // autoPlayVideo(rlVideo);
             break;
         case R.id.iv_close_video_feed:
             finish();
@@ -570,14 +661,37 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     /**
+     * 返回键的处理
+     *
+     * @param keyCode
+     * @param event
+     * @return
+     */
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            // 横屏播放的情况
+            if (getResources()
+                    .getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                setRequestedOrientation(
+                        ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private NetworkConnectChangedReceiver connectChangedReceiver;
+
+    /**
      * Activity 不在前台时 暂停播放
      */
     @Override
     protected void onPause() {
         super.onPause();
-        if (!isThrumePause) {// 若不是手动暂停，Activity进入后台自动暂停
-            lVideoView.onPause();
-        }
+        unregisterReceiver(connectChangedReceiver);
+        lVideoView.onThumePause();
     }
 
     /**
@@ -586,13 +700,14 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        Log.e("linksu", "onResume(VideoFeedDetailAct.java:558) isThrumePause"
-                + isThrumePause);
-        if (!isThrumePause) { // 不是手动暂停且从后台进入前台
-            lVideoView.currentPlayer();
-        } else { // 进入后台之前是暂停的状态,再次进入还是暂停的状态
-            lVideoView.startThumb();
+        if (connectChangedReceiver == null) {
+            connectChangedReceiver = new NetworkConnectChangedReceiver();
         }
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(connectChangedReceiver, filter);
+        connectChangedReceiver.setConnectChangeListener(this);
+        lVideoView.startThumb();
     }
 
     /**
@@ -632,7 +747,8 @@ public class MainActivity extends AppCompatActivity implements
 
                     @Override
                     public void onNext(@NonNull LemonVideoBean lemonVideoBean) {
-                        adapter.setNewData(lemonVideoBean.getSublist());
+                        lemonBeens = lemonVideoBean.getSublist();
+                        adapter.setNewData(lemonBeens);
                         srlLemon.setRefreshing(false); // 让SwipeRefreshLayout关闭刷新
 
                     }
@@ -647,4 +763,15 @@ public class MainActivity extends AppCompatActivity implements
                 });
 
     }
+
+    // /**
+    // * 项目启动时 LemonThread 获取数据线程
+    // */
+    // class LemonThread implements Runnable {
+    //
+    // @Override
+    // public void run() {
+    // getHttp();
+    // }
+    // }
 }

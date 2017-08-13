@@ -5,7 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/LemonDemon.iml" filepath="$PROJECT_DIR$/LemonDemon.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/sliding_menu_lib/sliding_menu_lib.iml" filepath="$PROJECT_DIR$/sliding_menu_lib/sliding_menu_lib.iml" />
-      <module fileurl="file://$PROJECT_DIR$/video-library/video-library.iml" filepath="$PROJECT_DIR$/video-library/video-library.iml" />
+      <module fileurl="file://$PROJECT_DIR$/video_library/video_library.iml" filepath="$PROJECT_DIR$/video_library/video_library.iml" />
     </modules>
   </component>
 </project>

@@ -10,7 +10,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/sliding_menu_lib" />
-            <option value="$PROJECT_DIR$/video-library" />
+            <option value="$PROJECT_DIR$/video_library" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

@@ -5,6 +5,6 @@ package com.nova.LemonDemo.bean;
  */
 
 public class Constant {
-
+    public static boolean VIDEO_FEED_WIFI = false;
     public static String LEMON_VIDEO ="http://47.91.104.211:8080/Lemon/";
 }

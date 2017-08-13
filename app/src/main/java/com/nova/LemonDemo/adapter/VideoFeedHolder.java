@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.nova.LemonDemo.R;
 import com.nova.LemonDemo.bean.LemonVideoBean;
 import com.nova.LemonDemo.bean.TabFragMainBeanItemBean;
@@ -80,25 +81,15 @@ public class VideoFeedHolder extends RecyclerView.ViewHolder
         this.mlist = mlist;
         itemBean = mlist.get(position);
         item_tv.setText(itemBean.getV_title());
+        // 设置缩略图
+        String imaglinks = itemBean.getV_imagelinks();
+        Glide.with(context).load(imaglinks).into(img);
     }
 
     /**
      * 判断是不是WiFi的情况
      */
     public void playerWifi() {
-        // if (Constants.VIDEO_FEED_WIFI) {
-        // ll_not_wifi.setVisibility(View.GONE);
-        // iv_video_feed_start.setEnabled(false);
-        // } else {
-        // int netType = NetChangeManager.getInstance().getNetType();
-        // if (netType != 1) {// 不是WiFi下的情况
-        // ll_not_wifi.setVisibility(View.VISIBLE);
-        // iv_video_feed_start.setEnabled(true);
-        // } else {
-        // ll_not_wifi.setVisibility(View.GONE);
-        // iv_video_feed_start.setEnabled(false);
-        // }
-        // }
     }
 
     /**

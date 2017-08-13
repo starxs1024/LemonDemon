@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 
 import com.nova.LemonDemo.R;
 import com.nova.LemonDemo.bean.LemonVideoBean;
+import com.nova.LemonDemo.listener.ItemClickListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,9 +21,14 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoFeedHolder> {
     private List mlist;
     private Context context;
     private RecyclerView recyclerView;
+    private ItemClickListener itemClickListener;
 
     public VideoAdapter(Context context) {
         this.context = context;
+    }
+    public VideoAdapter(Context context, ItemClickListener itemClickListener) {
+        this.context = context;
+        this.itemClickListener = itemClickListener;
     }
 
     @Override
@@ -48,8 +54,15 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoFeedHolder> {
     }
 
     @Override
-    public void onBindViewHolder(VideoFeedHolder holder, int position) {
+    public void onBindViewHolder(VideoFeedHolder holder, final int position) {
         holder.update(position, mlist);
+        View itemView = holder.itemView;
+        itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                itemClickListener.onItemClick(v, position);
+            }
+        });
     }
 
     @Override
@@ -61,4 +74,29 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoFeedHolder> {
     public long getItemId(int position) {
         return position;
     }
+
+    /**
+     * additional data;
+     *
+     * @param newData
+     */
+    public void addData(List newData) {
+        mlist.addAll(newData);
+//        notifyItemRangeInserted(mlist.size() - newData.size() + getHeaderLayoutCount(), newData.size());
+        this.mNotify();
+        compatibilityDataSizeChanged(newData.size());
+    }
+
+    /**
+     * compatible getLoadMoreViewCount and getEmptyViewCount may change
+     *
+     * @param size Need compatible data size
+     */
+    private void compatibilityDataSizeChanged(int size) {
+        final int dataSize = mlist == null ? 0 : mlist.size();
+        if (dataSize == size) {
+            notifyDataSetChanged();
+        }
+    }
+
 }
