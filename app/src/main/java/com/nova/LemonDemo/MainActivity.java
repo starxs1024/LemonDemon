@@ -2,6 +2,7 @@ package com.nova.LemonDemo;
 
 import android.app.Service;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.PixelFormat;
@@ -9,6 +10,9 @@ import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -30,6 +34,7 @@ import android.widget.Toast;
 import com.aspsine.swipetoloadlayout.OnLoadMoreListener;
 import com.aspsine.swipetoloadlayout.OnRefreshListener;
 import com.aspsine.swipetoloadlayout.SwipeToLoadLayout;
+import com.bumptech.glide.Glide;
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.linksu.video_manager_library.listener.OnVideoPlayerListener;
@@ -45,6 +50,8 @@ import com.nova.LemonDemo.listener.ItemClickListener;
 import com.nova.LemonDemo.net.LemonVideoClient;
 import com.nova.LemonDemo.net.LemonVideoService;
 import com.nova.LemonDemo.receiver.NetworkConnectChangedReceiver;
+import com.nova.LemonDemo.utils.AudioPlayUtils;
+import com.nova.LemonDemo.utils.CacheDataUtils;
 import com.nova.LemonDemo.utils.StateBarUtils;
 import com.nova.LemonDemo.utils.VisibilePercentsUtils;
 import com.nova.LemonDemo.utils.WindowsUtils;
@@ -55,6 +62,7 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import ch.ielse.view.SwitchView;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
@@ -80,8 +88,6 @@ public class MainActivity extends AppCompatActivity
     RelativeLayout rlVideoFeed;
     @BindView(R.id.full_screen)
     FrameLayout fullScreen;
-    // @BindView(R.id.srl_lemon)
-    // SwipeRefreshLayout srlLemon;
     @BindView(R.id.srl_lemon)
     SwipeToLoadLayout srlLemon;
     @BindView(R.id.iv_sound)
@@ -92,6 +98,12 @@ public class MainActivity extends AppCompatActivity
     LinearLayout toolbarMainReight;
     @BindView(R.id.toolbar)
     Toolbar toolbar;
+
+    TextView slidingClearNum;
+    SlidingMenu menu;
+    LemonVideoBean itemBean;
+    SwitchView switchView;
+
     // 是否处于滚动状态
     private boolean mScrollState = false;
     // item 的位置
@@ -102,6 +114,9 @@ public class MainActivity extends AppCompatActivity
     // 计数器
     private int mCurrentCounter;
     private int mTotalCounter = 2;
+    private String mDirSize = "";
+    public static final int SUCESS = 0;
+    public static final int FAILED = 1;
 
     private int position = 0; // 最大显示百分比的屏幕内的子view的位置
     private int itemPosition = 0;// item 的位置
@@ -127,9 +142,13 @@ public class MainActivity extends AppCompatActivity
     private long mDuration = 0;
 
     private boolean orientation = false;// 默认为竖屏的情况
-    private boolean isPrepared;
 
-    LemonVideoBean itemBean;
+    // WIFI下处理
+    private boolean isPrepared;
+    public static final boolean WIFIAUTOON = true;// 默认为wifi下自动播放
+    public static final boolean WIFIAUTOOFF = false;
+    boolean userSetWifi = true;
+    SharedPreferences preference = null;// 缓存
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -137,7 +156,7 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         getWindow().setFormat(PixelFormat.TRANSLUCENT);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);// 不锁屏
-        StateBarUtils.setTranslucentColor(this);// 沉浸式状态栏
+//        StateBarUtils.setTranslucentColor(this);// 沉浸式状态栏
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
@@ -175,7 +194,7 @@ public class MainActivity extends AppCompatActivity
      * 初始化侧滑菜单
      */
     public void initSlidingMenu() {
-        SlidingMenu menu = new SlidingMenu(this);
+        menu = new SlidingMenu(this);
         menu.setMode(SlidingMenu.RIGHT);
         // 设置触摸屏幕的模式
         menu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
@@ -189,6 +208,78 @@ public class MainActivity extends AppCompatActivity
         menu.attachToActivity(this, SlidingMenu.SLIDING_CONTENT);
         // 为侧滑菜单设置布局
         menu.setMenu(R.layout.right_sliding_menu);
+        // 侧滑控件绑定
+        switchView = (SwitchView) menu.findViewById(R.id.switchview);
+        slidingClearNum = (TextView) menu.findViewById(R.id.sliding_clear_num);
+        TextView slidingClear = (TextView) menu
+                .findViewById(R.id.sliding_tv_clear);
+
+        try {
+            // 显示的TextView上显示清理前的缓存大小
+            slidingClearNum.setText(
+                    CacheDataUtils.getTotalCacheSize(MainActivity.this));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // 清理缓存监听
+        slidingClear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // 清理前的缓存大小
+                        try {
+                            mDirSize = CacheDataUtils
+                                    .getTotalCacheSize(getApplicationContext());
+                            CacheDataUtils.clearAllCache(MainActivity.this);
+                            SystemClock.sleep(500);
+                            try {
+                                if (CacheDataUtils
+                                        .getTotalCacheSize(MainActivity.this)
+                                        .startsWith("0")) {
+                                    handler.sendEmptyMessage(SUCESS);
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }).start();
+            }
+        });
+
+        switchView.setOnStateChangedListener(
+                new SwitchView.OnStateChangedListener() {
+                    @Override
+                    public void toggleToOn(SwitchView view) {
+                        preference = getApplicationContext()
+                                .getSharedPreferences("userSet", 0);
+
+                        SharedPreferences.Editor editor = preference.edit();
+                        editor.putBoolean("userSetWifi", WIFIAUTOON);
+
+                        editor.commit();
+
+                        view.toggleSwitch(true); // or false
+                    }
+
+                    @Override
+                    public void toggleToOff(SwitchView view) {
+                        preference = getApplicationContext()
+                                .getSharedPreferences("userSet", 0);
+
+                        SharedPreferences.Editor editor = preference.edit();
+                        editor.putBoolean("userSetWifi", WIFIAUTOOFF);
+
+                        editor.commit();
+
+                        view.toggleSwitch(false); // or true
+                    }
+                });
         // 监听slidingmenu打开后
         menu.setOnOpenedListener(new SlidingMenu.OnOpenedListener() {
             @Override
@@ -238,45 +329,46 @@ public class MainActivity extends AppCompatActivity
         // 设置静音
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
         if (isSound) {
-            ivSound.setImageResource(R.drawable.sound_off);
+            Glide.with(getApplicationContext()).load(R.drawable.sound_off)
+                    .into(ivSound);
+            // ivSound.setImageResource(R.drawable.sound_off);
             isSound = false;
         }
+
+        /**
+         * 用户设置
+         */
+        // wifi下自动播放开关
+        preference = getApplicationContext().getSharedPreferences("userSet", 0);
+        userSetWifi = preference.getBoolean("userSetWifi", WIFIAUTOON);
+        Log.d("userwifi", userSetWifi + " : 用户最后设置");
+
+        if (userSetWifi == WIFIAUTOON) {
+            switchView.toggleSwitch(userSetWifi);
+        } else {
+            switchView.toggleSwitch(userSetWifi);
+        }
+
     }
 
     private void setSound() {
         if (!isSound) {
-            ivSound.setImageResource(R.drawable.sound_open);
+            Glide.with(getApplicationContext()).load(R.drawable.sound_open)
+                    .into(ivSound);
+
+            // ivSound.setImageResource(R.drawable.sound_open);
             isSound = true;
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 7, 0);// tempVolume:音量绝对值
         } else {
-            ivSound.setImageResource(R.drawable.sound_off);
+            Glide.with(getApplicationContext()).load(R.drawable.sound_off)
+                    .into(ivSound);
+            // ivSound.setImageResource(R.drawable.sound_off);
             isSound = false;
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);// 静音
 
         }
     }
 
-    /**
-     * 使用(SwipeRefreshLayout + RecyclerView)方式实现简单的下拉刷新
-     */
-    // private void freshLayout() {
-    // // 使用(SwipeRefreshLayout + RecyclerView)方式实现简单的下拉刷新
-    // srlLemon.setColorSchemeColors(Color.RED, Color.BLUE, Color.GREEN,
-    // Color.YELLOW);
-    // srlLemon.setOnRefreshListener(
-    // new SwipeRefreshLayout.OnRefreshListener() {
-    // @Override
-    // public void onRefresh() {
-    // srlLemon.setRefreshing(false);// 取消进度框
-    // Toast.makeText(getApplication(), "刷新成功",
-    // Toast.LENGTH_SHORT).show();
-    // }
-    // });
-    // }
-
-    /**
-     *
-     */
     @Override
     public void wifiNetwork(boolean flag) {
         autoPlayVideo(rlVideo);
@@ -296,6 +388,26 @@ public class MainActivity extends AppCompatActivity
     public void notNetWork() {
 
     }
+
+    private Handler handler = new Handler() {
+
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+            case SUCESS:
+                Toast.makeText(MainActivity.this, "清理完成", Toast.LENGTH_SHORT)
+                        .show();
+                try {
+                    slidingClearNum.setText(CacheDataUtils
+                            .getTotalCacheSize(MainActivity.this));
+                    // 显示的TextView上显示清理前的缓存大小
+                    // txtCacheSize.setText(CacheDataManager.getTotalCacheSize(SettingsActivity.this));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    };
 
     /**
      * 数据流量时显示的逻辑
@@ -338,33 +450,7 @@ public class MainActivity extends AppCompatActivity
         srlLemon.postDelayed(new Runnable() {
             @Override
             public void run() {
-                LemonVideoClient.getInstance()
-                        .create(LemonVideoService.class, Constant.LEMON_VIDEO)
-                        .getLemonVideo(mTotalCounter)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Consumer<LemonVideoBean>() {
-                            @Override
-                            public void accept(
-                                    @NonNull LemonVideoBean lemonVideoBean)
-                                    throws Exception {
-                                List<LemonVideoBean.SublistBean> data = lemonVideoBean
-                                        .getSublist();
-                                adapter.addData(data);
-                                mCurrentCounter = mTotalCounter;
-                                mTotalCounter += 1;
-                                for (int i = 0; i < lemonBeens.size(); i++) {
-                                    if (itemBean == null) {
-                                        itemBean = new LemonVideoBean();
-                                    }
-                                    itemBeens.add(itemBean);
-                                }
-                                // videoRecyclerAdapter
-                                // .loadMoreComplete();
-                            }
-                        });
-                adapter.notifyDataSetChanged();
-                srlLemon.setLoadingMore(false);
+                getNextHttp();
             }
         }, 1000);
     }
@@ -382,12 +468,19 @@ public class MainActivity extends AppCompatActivity
         // }, 10);
     }
 
-    @OnClick({ R.id.toolbar_main_left, R.id.toolbar_main_reight })
+    @OnClick({ R.id.toolbar_main_left, R.id.toolbar_main_reight,
+            R.id.iv_sound })
     public void onViewClicked(View view) {
         switch (view.getId()) {
+        case R.id.iv_sound:
+            setSound();
+            break;
         case R.id.toolbar_main_left:
+            // 全局静音和开音
+            setSound();
             break;
         case R.id.toolbar_main_reight:
+            menu.showMenu(true);
             break;
         }
     }
@@ -395,7 +488,6 @@ public class MainActivity extends AppCompatActivity
     /**
      * 列表的滚动监听
      */
-
     private class VideoFeedScrollListener
             extends RecyclerView.OnScrollListener {
         LinearLayoutManager linearManager = (LinearLayoutManager) layoutManager;
@@ -409,9 +501,12 @@ public class MainActivity extends AppCompatActivity
                 mScrollState = false;
                 // 滑动停止和松开手指时，调用此方法 进行播放
                 autoPlayVideo(recyclerView);
-                // if (!ViewCompat.canScrollVertically(recyclerView, 1)) {
-                // srlLemon.setLoadingMore(true);
-                // }
+                // 提前加载视频列表
+
+                if ((itemPosition + 1) % 10 >= 7) {
+                    getNextHttp();
+                }
+                Log.d("itemPosition", itemPosition + "");
                 break;
             case RecyclerView.SCROLL_STATE_DRAGGING:// 用户用手指滚动
                 mScrollState = true;
@@ -757,16 +852,37 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            // 横屏播放的情况
+        switch (keyCode) {
+        case KeyEvent.KEYCODE_VOLUME_DOWN:// 游戏音量减小
+            AudioPlayUtils.getInstance().lowerVoice(audioManager);
+            // 当前音量
+            int currentVolume = audioManager
+                    .getStreamVolume(AudioManager.STREAM_MUSIC);
+            if (currentVolume == 0) {
+                Glide.with(getApplicationContext()).load(R.drawable.sound_off)
+                        .into(ivSound);
+                // ivSound.setImageResource(R.drawable.sound_off);
+                isSound = false;
+            }
+            return true;
+        case KeyEvent.KEYCODE_VOLUME_UP:// 游戏音量增大
+            AudioPlayUtils.getInstance().raiseVoice(audioManager);
+            Glide.with(getApplicationContext()).load(R.drawable.sound_open)
+                    .into(ivSound);
+            // ivSound.setImageResource(R.drawable.sound_open);
+            isSound = true;
+            return true;
+        case KeyEvent.KEYCODE_BACK:// 横屏播放的情况
             if (getResources()
                     .getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 setRequestedOrientation(
                         ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
                 return true;
             }
+        default:
+            break;
         }
-        return false;
+        return super.onKeyDown(keyCode, event);
     }
 
     private NetworkConnectChangedReceiver connectChangedReceiver;
@@ -862,4 +978,41 @@ public class MainActivity extends AppCompatActivity
                 });
     }
 
+    // 下一页加载
+    private void getNextHttp() {
+        LemonVideoClient.getInstance()
+                .create(LemonVideoService.class, Constant.LEMON_VIDEO)
+                .getLemonVideo(mTotalCounter).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<LemonVideoBean>() {
+                    @Override
+                    public void accept(@NonNull LemonVideoBean lemonVideoBean)
+                            throws Exception {
+                        List<LemonVideoBean.SublistBean> data = lemonVideoBean
+                                .getSublist();
+                        adapter.addData(data);
+                        mCurrentCounter = mTotalCounter;
+                        mTotalCounter += 1;
+                        for (int i = 0; i < lemonBeens.size(); i++) {
+                            if (itemBean == null) {
+                                itemBean = new LemonVideoBean();
+                            }
+                            itemBeens.add(itemBean);
+                        }
+                        // videoRecyclerAdapter
+                        // .loadMoreComplete();
+                    }
+                });
+        adapter.notifyDataSetChanged();
+        srlLemon.setLoadingMore(false);
+    }
+
+    private int getNum(int num) {
+        if (num <= 100) {
+            if(num == 100){
+            }
+
+        }
+        return num + getNum(num - 1);
+    }
 }

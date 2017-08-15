@@ -654,7 +654,11 @@ public class LMediaController extends FrameLayout implements IMediaController {
         float percent = (float) ((double) position / (double) mDuration);
         DecimalFormat fnum = new DecimalFormat("##0.###E0");
         float c_percent = 0;
-        c_percent = Float.parseFloat(fnum.format(percent).trim());
+        try {
+            c_percent = Float.parseFloat(fnum.format(percent).trim());
+        } catch (Exception e) {
+
+        }
         skVideoSeek.setProgress((int) (c_percent * 100));
     }
 

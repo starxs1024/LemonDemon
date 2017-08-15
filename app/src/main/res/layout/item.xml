@@ -6,8 +6,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#000000"
-        android:paddingTop="70dp">
+        android:background="#000000">
 
         <RelativeLayout
             android:id="@+id/visiabile"
@@ -101,7 +100,7 @@
                     android:textSize="12sp" />
             </RelativeLayout>
 
-            <RelativeLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/rl"
@@ -110,34 +109,73 @@
                 android:layout_marginTop="12dp"
                 android:padding="10dp">
 
-                <TextView
-                    android:id="@+id/tv_video_comment"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="评论：9080"
-                    android:textColor="#8d8d8d"
-                    android:textSize="12sp" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center">
 
-                <TextView
-                    android:id="@+id/tv_video_shear"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
-                    android:gravity="center"
-                    android:text="分享"
-                    android:textColor="#8d8d8d"
-                    android:textSize="12sp" />
+                    <ImageView
+                        android:id="@+id/imageView6"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:src="@mipmap/more" />
+                </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tv_video_more"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
-                    android:text="更多"
-                    android:textColor="#8d8d8d"
-                    android:textSize="12sp" />
-            </RelativeLayout>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center">
+
+                    <ImageView
+                        android:id="@+id/imageView2"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:src="@mipmap/share" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:src="@mipmap/love_off" />
+                </LinearLayout>
+
+
+                <!--<TextView-->
+                <!--android:id="@+id/tv_video_comment"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:gravity="center"-->
+                <!--android:text="评论：9080"-->
+                <!--android:textColor="#8d8d8d"-->
+                <!--android:textSize="12sp" />-->
+
+                <!--<TextView-->
+                <!--android:id="@+id/tv_video_shear"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_centerInParent="true"-->
+                <!--android:gravity="center"-->
+                <!--android:text="分享"-->
+                <!--android:textColor="#8d8d8d"-->
+                <!--android:textSize="12sp" />-->
+
+                <!--<TextView-->
+                <!--android:id="@+id/tv_video_more"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_alignParentRight="true"-->
+                <!--android:text="更多"-->
+                <!--android:textColor="#8d8d8d"-->
+                <!--android:textSize="12sp" />-->
+            </LinearLayout>
         </RelativeLayout>
     </RelativeLayout>
 

@@ -3,14 +3,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#000000"
     android:orientation="vertical">
 
-    <!-- android:layout_height="?attr/actionBarSize"-->
+    <!-- android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+    -->
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        android:background="?attr/colorPrimary"
+        android:background="#33000000"
         android:gravity="center">
 
         <LinearLayout
@@ -26,11 +29,11 @@
 
                 <ImageView
                     android:id="@+id/iv_sound"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
                     android:layout_gravity="center"
                     android:clickable="true"
-                    android:scaleType="centerCrop" />
+                    android:scaleType="centerInside" />
             </LinearLayout>
 
             <TextView

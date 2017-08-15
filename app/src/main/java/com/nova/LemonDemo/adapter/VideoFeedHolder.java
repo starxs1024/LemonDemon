@@ -52,12 +52,12 @@ public class VideoFeedHolder extends RecyclerView.ViewHolder
                 .findViewById(R.id.iv_video_feed_start);
         this.ll_not_wifi = (LinearLayout) itemView
                 .findViewById(R.id.ll_not_wifi);
-        this.tv_video_shear = (TextView) itemView
-                .findViewById(R.id.tv_video_shear);
-        this.tv_video_more = (TextView) itemView
-                .findViewById(R.id.tv_video_more);
-        this.tv_video_comment = (TextView) itemView
-                .findViewById(R.id.tv_video_comment);
+//        this.tv_video_shear = (TextView) itemView
+//                .findViewById(R.id.tv_video_shear);
+//        this.tv_video_more = (TextView) itemView
+//                .findViewById(R.id.tv_video_more);
+//        this.tv_video_comment = (TextView) itemView
+//                .findViewById(R.id.tv_video_comment);
         this.context = context;
         bindListener();
     }
@@ -66,9 +66,9 @@ public class VideoFeedHolder extends RecyclerView.ViewHolder
      * 绑定监听
      */
     private void bindListener() {
-        tv_video_shear.setOnClickListener(this);
-        tv_video_more.setOnClickListener(this);
-        tv_video_comment.setOnClickListener(this);
+//        tv_video_shear.setOnClickListener(this);
+//        tv_video_more.setOnClickListener(this);
+//        tv_video_comment.setOnClickListener(this);
         iv_video_feed_start.setOnClickListener(this);
     }
 
@@ -84,6 +84,9 @@ public class VideoFeedHolder extends RecyclerView.ViewHolder
         // 设置缩略图
         String imaglinks = itemBean.getV_imagelinks();
         Glide.with(context).load(imaglinks).into(img);
+        //设置时间
+        tv_video_time.setText(itemBean.getV_time());
+
     }
 
     /**
@@ -119,15 +122,15 @@ public class VideoFeedHolder extends RecyclerView.ViewHolder
                 listener.videoWifiStart();
             }
             break;
-        case R.id.tv_video_shear:
-            if (listener != null) {
-
-            }
-            break;
-        case R.id.tv_video_comment:
-            break;
-        case R.id.tv_video_more:
-            break;
+//        case R.id.tv_video_shear:
+//            if (listener != null) {
+//
+//            }
+//            break;
+//        case R.id.tv_video_comment:
+//            break;
+//        case R.id.tv_video_more:
+//            break;
         }
     }
 
