@@ -11,6 +11,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -29,15 +30,12 @@ import com.pili.pldroid.player.widget.PLVideoView;
 import java.io.File;
 
 /**
- * ================================================
- * 作    者：linksus
- * 版    本：1.0
- * 创建日期：7/24 0024
- * 描    述：将播放器进行封装
- * 修订历史：
+ * ================================================ 作 者：linksus 版 本：1.0
+ * 创建日期：7/24 0024 描 述：将播放器进行封装 修订历史：
  * ================================================
  */
-public class LVideoView extends FrameLayout implements View.OnClickListener, OnVideoPlayBtnClickListener, ONShowHidListenner {
+public class LVideoView extends FrameLayout implements View.OnClickListener,
+        OnVideoPlayBtnClickListener, ONShowHidListenner {
 
     private static final String TAG = "LVideoView";
     /**
@@ -75,12 +73,11 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
 
     private boolean isPause = false;// 是否暂停
 
-    public NewCircleTextProgressbar pg_voide_download;//下载进度
+    public NewCircleTextProgressbar pg_voide_download;// 下载进度
     public ImageView iv_video_download;// 下载按钮
     public FrameLayout fl_voide_download;// 下载view
-    //    private TabFragMainBeanItemBean paramBean;//进入此页面带入
+    // private TabFragMainBeanItemBean paramBean;//进入此页面带入
     private String finalpath;
-
 
     public LVideoView(@NonNull Context context) {
         super(context);
@@ -92,7 +89,8 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
         initVideo(context);
     }
 
-    public LVideoView(@NonNull Context context, @Nullable AttributeSet attrs, @AttrRes int defStyleAttr) {
+    public LVideoView(@NonNull Context context, @Nullable AttributeSet attrs,
+            @AttrRes int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initVideo(context);
     }
@@ -112,8 +110,10 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
      * 初始化view
      */
     public void initView() {
-        fraVideoContainer = (FrameLayout) findViewById(R.id.fra_live_video_container);
-        llErrorCover = (LinearLayout) findViewById(R.id.ll_live_video_error_cover);
+        fraVideoContainer = (FrameLayout) findViewById(
+                R.id.fra_live_video_container);
+        llErrorCover = (LinearLayout) findViewById(
+                R.id.ll_live_video_error_cover);
         progressBar = (ProgressBar) findViewById(R.id.list_video_progress);
         erroIv = (ImageView) findViewById(R.id.erroIcon);
         tvErrorCover = (TextView) findViewById(R.id.tv_video_error_cover);
@@ -131,17 +131,17 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
         videoView.setBackgroundColor(Color.BLACK);
         AVOptions options = new AVOptions();
         // 解码方式，codec＝1，硬解; codec=0, 软解
-//        options.setInteger(AVOptions.KEY_MEDIACODEC, 0);
+        // options.setInteger(AVOptions.KEY_MEDIACODEC, 0);
         // 开启底层优化
-//        options.setInteger(AVOptions.KEY_LIVE_STREAMING, 1);
+        // options.setInteger(AVOptions.KEY_LIVE_STREAMING, 1);
         // 不开启直播优化
-//        options.setInteger(AVOptions.KEY_LIVE_STREAMING, 0);
+        // options.setInteger(AVOptions.KEY_LIVE_STREAMING, 0);
         // 开启延时优化---- service中实列化的videoview 添加后 播放几秒无声音
-//        options.setInteger(AVOptions.KEY_DELAY_OPTIMIZATION, 1);
+        // options.setInteger(AVOptions.KEY_DELAY_OPTIMIZATION, 1);
         // 准备超时时间10 * 1000
-//        options.setInteger(AVOptions.KEY_PREPARE_TIMEOUT, 10 * 1000);
+        // options.setInteger(AVOptions.KEY_PREPARE_TIMEOUT, 10 * 1000);
         // 读取视频流超时时间10 * 1000
-//        options.setInteger(AVOptions.KEY_GET_AV_FRAME_TIMEOUT, 10 * 1000);
+        // options.setInteger(AVOptions.KEY_GET_AV_FRAME_TIMEOUT, 10 * 1000);
         // 默认的缓存大小2000
         options.setInteger(AVOptions.KEY_CACHE_BUFFER_DURATION, 2000);
         // 最大的缓存大小4000
@@ -162,10 +162,9 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
         addVideoViewWithContainer();
     }
 
-//    public void setItemBean(TabFragMainBeanItemBean paramBean) {
-//        this.paramBean = paramBean;
-//    }
-
+    // public void setItemBean(TabFragMainBeanItemBean paramBean) {
+    // this.paramBean = paramBean;
+    // }
 
     /**
      * 跳转到指定位置
@@ -272,12 +271,13 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
      *
      * @param url
      */
-//    public void updateVideoDownLoadSate(String url) {
-//        FileEntity fileEntity = (FileEntity) DbHelper.getInstance().searchAsCulom(FileEntity.class, "url", url);
-//        if (fileEntity != null) {
-//            videoInit();
-//        }
-//    }
+    // public void updateVideoDownLoadSate(String url) {
+    // FileEntity fileEntity = (FileEntity)
+    // DbHelper.getInstance().searchAsCulom(FileEntity.class, "url", url);
+    // if (fileEntity != null) {
+    // videoInit();
+    // }
+    // }
 
     /**
      * 手动暂停
@@ -315,8 +315,7 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
             videoView.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    Log.e("linksu",
-                            "run(LVideoView.java:349)");
+                    Log.e("linksu", "run(LVideoView.java:349)");
                     videoView.setVolume(1, 1);
                     videoView.pause();
                 }
@@ -330,9 +329,11 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
      * @param newConfig
      */
     public void onConfigurationChanged(Configuration newConfig) {
-        ViewGroup.LayoutParams layoutParams = fraVideoContainer.getLayoutParams();
-        if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) { //竖屏
-            layoutParams.height = (int) getResources().getDimension(R.dimen.live_video_height);
+        ViewGroup.LayoutParams layoutParams = fraVideoContainer
+                .getLayoutParams();
+        if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) { // 竖屏
+            layoutParams.height = (int) getResources()
+                    .getDimension(R.dimen.live_video_height);
             fraVideoContainer.setLayoutParams(layoutParams);
         } else {// 横屏
             layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
@@ -386,7 +387,8 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
      *
      * @param videoPlayerListener
      */
-    public void setOnVideoPlayerListener(OnVideoPlayerListener videoPlayerListener) {
+    public void setOnVideoPlayerListener(
+            OnVideoPlayerListener videoPlayerListener) {
         this.videoPlayerListener = videoPlayerListener;
     }
 
@@ -417,22 +419,23 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
         public boolean onError(PLMediaPlayer plMediaPlayer, int i) {
             String toast;
             switch (i) {
-                case -5:
-                    toast = "网络异常";
-                    break;
-                case -11:
-                    toast = "与服务器连接断开";
-                    break;
-                case -110:
-                    toast = "连接超时";
-                    break;
-                default:
-                    toast = "播放状态异常";
-                    break;
+            case -5:
+                toast = "网络异常";
+                break;
+            case -11:
+                toast = "与服务器连接断开";
+                break;
+            case -110:
+                toast = "连接超时";
+                break;
+            default:
+                toast = "播放状态异常";
+                break;
             }
             llErrorCover.setVisibility(VISIBLE);
             tvErrorCover.setText(toast);
-            erroIv.setImageResource(R.drawable.icon_live_video_notice_thumbnail);
+            erroIv.setImageResource(
+                    R.drawable.icon_live_video_notice_thumbnail);
             if (videoPlayerListener != null)
                 videoPlayerListener.onVideoError(i, toast);
             return true;
@@ -453,6 +456,8 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
         erroIv.setVisibility(VISIBLE);
         erroIv.setImageResource(R.drawable.play_again);
         tvErrorCover.setText("重播");
+        // 加上这句，避免循环播放video的时候，内存不断飙升。
+        Runtime.getRuntime().gc();
     }
 
     // 准备完毕后回调
@@ -472,16 +477,20 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
             }, 500);
             start();
             if (mController != null) { // 自动播放时 拿到这个播放进度
-                mController.startVideoPlayingCallback(new LMediaController.OnVideoPlayingCallBack() {
-                    @Override
-                    public void onVideoPlaying(long currentPosition, long mDuration, int mPlayStatus) {
-                        setProgressToUI(currentPosition, mDuration);
-                        if (videoPlayerListener != null) {
-                            videoPlayerListener.onVideoPlayingPro(currentPosition, mDuration, mPlayStatus);
-                        }
+                mController.startVideoPlayingCallback(
+                        new LMediaController.OnVideoPlayingCallBack() {
+                            @Override
+                            public void onVideoPlaying(long currentPosition,
+                                    long mDuration, int mPlayStatus) {
+                                setProgressToUI(currentPosition, mDuration);
+                                if (videoPlayerListener != null) {
+                                    videoPlayerListener.onVideoPlayingPro(
+                                            currentPosition, mDuration,
+                                            mPlayStatus);
+                                }
 
-                    }
-                }, 1000);
+                            }
+                        }, 1000);
             }
         }
     };
@@ -491,12 +500,12 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
         @Override
         public boolean onInfo(PLMediaPlayer plMediaPlayer, int i, int i1) {
             switch (i) {
-                case 701:
-                    // 开始缓冲
-                    break;
-                case 702:
-                    // 停止缓冲
-                    break;
+            case 701:
+                // 开始缓冲
+                break;
+            case 702:
+                // 停止缓冲
+                break;
             }
             if (videoPlayerListener != null)
                 videoPlayerListener.onBufferingUpdate();
@@ -514,19 +523,23 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
 
     @Override
     public void setOnVideoPlayBtnClick(boolean isPlay) {
-        if (isPlay) { //开始播放 监听进度w
+        if (isPlay) { // 开始播放 监听进度w
             if (mController != null) {
-                mController.startVideoPlayingCallback(new LMediaController.OnVideoPlayingCallBack() {
-                    @Override
-                    public void onVideoPlaying(long currentPosition, long mDuration, int mPlayStatus) {
-                        setProgressToUI(currentPosition, mDuration);
-                        if (videoPlayerListener != null) {
-                            videoPlayerListener.onVideoPlayingPro(currentPosition, mDuration, mPlayStatus);
-                        }
-                    }
-                }, 1000);
+                mController.startVideoPlayingCallback(
+                        new LMediaController.OnVideoPlayingCallBack() {
+                            @Override
+                            public void onVideoPlaying(long currentPosition,
+                                    long mDuration, int mPlayStatus) {
+                                setProgressToUI(currentPosition, mDuration);
+                                if (videoPlayerListener != null) {
+                                    videoPlayerListener.onVideoPlayingPro(
+                                            currentPosition, mDuration,
+                                            mPlayStatus);
+                                }
+                            }
+                        }, 1000);
             }
-        } else { //暂停播放
+        } else { // 暂停播放
 
         }
     }
@@ -547,7 +560,6 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
             progressBar.setSecondaryProgress(percent * 10);
         }
     }
-
 
     @Override
     public void onShow() {
@@ -582,4 +594,13 @@ public class LVideoView extends FrameLayout implements View.OnClickListener, OnV
             videoPlayerListener.onVideoThumbStart();
         }
     }
+
+    // @Override
+    // protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    // WindowManager wm = (WindowManager) getContext()
+    // .getSystemService(Context.WINDOW_SERVICE);
+    // int width = wm.getDefaultDisplay().getWidth();
+    // int height = wm.getDefaultDisplay().getHeight();
+    // setMeasuredDimension(width, height);
+    // }
 }

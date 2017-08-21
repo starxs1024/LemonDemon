@@ -148,20 +148,20 @@
                 app:out_line_color="#00000000"
                 app:progress_color="#E0001A" />
 
-            <ImageView
-                android:id="@+id/iv_video_download"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/icon_video_download" />
+            <!--<ImageView-->
+                <!--android:id="@+id/iv_video_download"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:src="@drawable/icon_video_download" />-->
         </FrameLayout>
 
-        <ImageView
-            android:id="@+id/list_video_btn_all"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp"
-            android:src="@drawable/video_list_full_screen" />
+        <!--<ImageView-->
+            <!--android:id="@+id/list_video_btn_all"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:paddingLeft="10dp"-->
+            <!--android:paddingRight="10dp"-->
+            <!--android:src="@drawable/video_list_full_screen" />-->
 
     </LinearLayout>
 </RelativeLayout>

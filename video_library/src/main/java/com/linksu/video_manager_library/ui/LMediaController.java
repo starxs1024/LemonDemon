@@ -153,8 +153,8 @@ public class LMediaController extends FrameLayout implements IMediaController {
                 .findViewById(R.id.ll_layout_media_controller_more_container);
         imgVideoPlay = (ImageView) rootView
                 .findViewById(R.id.list_video_btn_play);
-        imgVideoFullScreen = (ImageView) rootView
-                .findViewById(R.id.list_video_btn_all);
+//        imgVideoFullScreen = (ImageView) rootView
+//                .findViewById(R.id.list_video_btn_all);
         tvCurrentTime = (TextView) rootView
                 .findViewById(R.id.list_video_tv_current_time);
         tvAllTime = (TextView) rootView
@@ -165,8 +165,8 @@ public class LMediaController extends FrameLayout implements IMediaController {
 
         pg_voide_download = (NewCircleTextProgressbar) rootView
                 .findViewById(R.id.pg_voide_download);
-        iv_video_download = (ImageView) rootView
-                .findViewById(R.id.iv_video_download);
+//        iv_video_download = (ImageView) rootView
+//                .findViewById(R.id.iv_video_download);
         skVideoSeek.setThumbOffset(1);
         skVideoSeek.setMax(1000);
         bindListener();
@@ -178,7 +178,7 @@ public class LMediaController extends FrameLayout implements IMediaController {
      */
     private void judgeAdvertVisible() {
         fl_voide_download.setVisibility(isAdvert ? GONE : VISIBLE);
-        imgVideoFullScreen.setVisibility(isAdvert ? GONE : VISIBLE);
+//        imgVideoFullScreen.setVisibility(isAdvert ? GONE : VISIBLE);
         llTopContainer.setVisibility(isAdvert ? GONE : VISIBLE);
     }
 
@@ -221,7 +221,7 @@ public class LMediaController extends FrameLayout implements IMediaController {
      */
     private void bindListener() {
         imgVideoPlay.setOnClickListener(mVideoPlayClick);
-        imgVideoFullScreen.setOnClickListener(mFullScreenClick);
+//        imgVideoFullScreen.setOnClickListener(mFullScreenClick);
         skVideoSeek.setOnSeekBarChangeListener(mSeekListener);
     }
 
@@ -316,7 +316,7 @@ public class LMediaController extends FrameLayout implements IMediaController {
                 break;
             }
             // 图片变换
-            updateFullScreenBtnUI();
+//            updateFullScreenBtnUI();
         }
     };
 
@@ -416,7 +416,7 @@ public class LMediaController extends FrameLayout implements IMediaController {
             isControllerShow = true;
         }
         updatePlayBtnUI();
-        updateFullScreenBtnUI();
+//        updateFullScreenBtnUI();
         mHandler.sendEmptyMessage(SET_PROGRESS_UPDATE_UI);
         if (timeout != 0) {
             mHandler.removeMessages(SET_CONTROLLER_VISIBLE_GONE);
@@ -575,31 +575,31 @@ public class LMediaController extends FrameLayout implements IMediaController {
     /**
      * 根据播放状态更新播放按钮的图标
      */
-    public void updateFullScreenBtnUI() {
-        if (isAdvert) {
-            return;
-        }
-        // 控制方向切换
-        int screenOrientation = ((Activity) context).getRequestedOrientation();
-        switch (screenOrientation) {
-        case ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE:
-            llMoreContainer.setVisibility(GONE);
-            fl_voide_download.setVisibility(GONE);
-            imgVideoFullScreen
-                    .setImageResource(R.drawable.video_list_small_screen);
-            break;
-        case ActivityInfo.SCREEN_ORIENTATION_PORTRAIT:
-            llMoreContainer.setVisibility(VISIBLE);
-            if (isNewsDetailV) { // 带视频的新闻
-                fl_voide_download.setVisibility(GONE);
-            } else {
-                fl_voide_download.setVisibility(VISIBLE);
-            }
-            imgVideoFullScreen
-                    .setImageResource(R.drawable.video_list_full_screen);
-            break;
-        }
-    }
+//    public void updateFullScreenBtnUI() {
+//        if (isAdvert) {
+//            return;
+//        }
+//        // 控制方向切换
+//        int screenOrientation = ((Activity) context).getRequestedOrientation();
+//        switch (screenOrientation) {
+//        case ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE:
+//            llMoreContainer.setVisibility(GONE);
+//            fl_voide_download.setVisibility(GONE);
+//            imgVideoFullScreen
+//                    .setImageResource(R.drawable.video_list_small_screen);
+//            break;
+//        case ActivityInfo.SCREEN_ORIENTATION_PORTRAIT:
+//            llMoreContainer.setVisibility(VISIBLE);
+//            if (isNewsDetailV) { // 带视频的新闻
+//                fl_voide_download.setVisibility(GONE);
+//            } else {
+//                fl_voide_download.setVisibility(VISIBLE);
+//            }
+//            imgVideoFullScreen
+//                    .setImageResource(R.drawable.video_list_full_screen);
+//            break;
+//        }
+//    }
 
     /**
      * 监听播放按钮的点击事件
